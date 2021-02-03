@@ -1,5 +1,6 @@
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGJhcmRlbCIsImEiOiJja2pwc2w2a3Y3OGZhMnNsZzZ3cWttZzZ0In0.Y9v5tnT7kvv0VqSEChF67g';
 
+var key;
 
 var firebaseConfig = {
     apiKey: "AIzaSyAufy9ngd3oVFnl0rsQZfMMm-wlmXcftck",
@@ -81,7 +82,6 @@ map.on('load', function () {
         if (geojson.features.length > 1) geojson.features.pop();
 
         // Clear the Distance container to populate it with a new value
-        distanceContainer.innerHTML = '';
 
         // If a feature was clicked, remove it from the map
         if (features.length) {
@@ -119,13 +119,6 @@ map.on('load', function () {
 
             geojson.features.push(linestring);
 
-            // Populate the distanceContainer with total distance
-            var value = document.createElement('pre');
-            value.textContent =
-                'Total distance: ' +
-                turf.length(linestring).toLocaleString() +
-                'km';
-            distanceContainer.appendChild(value);
         }
 
         map.getSource('geojson').setData(geojson);
@@ -145,7 +138,7 @@ map.on('mousemove', function (e) {
 });
 
 function writeGeoData(id, lat, lng,) {
-    firebase.database().ref('points/').push({
+    firebase.database().ref('user/'+key+'/points').push({
       id: id,
       lng: lng,
       lat : lat
@@ -153,8 +146,24 @@ function writeGeoData(id, lat, lng,) {
   }
 
 
-  var GeoData = firebase.database().ref('points/');
-  GeoData.on('child_added', (data) => {
+// Eigene Pins
+
+  $( document ).ready(function() {
+    if(Cookies.get('id')){
+        key = Cookies.get('id');
+        console.log("Found "+ key); 
+    } else {
+        firebase.database().ref('user/').push({
+            id: 'Test',
+            points: ''
+          }).then((snap) => {
+            key = snap.key 
+            console.log("New" +snap.key );
+            Cookies.set('id', key)
+         });
+    }
+
+    firebase.database().ref('user/'+key+'/points').on('child_added', (data) => {
         // add marker to map
         console.log("Neuer Punkt an "+data.val().lng+" und "+data.val().lat);
         console.log()
@@ -162,3 +171,5 @@ function writeGeoData(id, lat, lng,) {
         .setLngLat([data.val().lat, data.val().lng])
         .addTo(map);
   });
+
+});
