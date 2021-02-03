@@ -138,12 +138,30 @@ map.on('mousemove', function (e) {
 });
 
 function writeGeoData(id, lat, lng,) {
-    firebase.database().ref('user/'+key+'/points').push({
+    firebase.database().ref('points').push({
       id: id,
       lng: lng,
       lat : lat
     });
+
+    firebase.database().ref('user/'+key+'/points').push({
+        id: id,
+        lng: lng,
+        lat : lat
+      });
   }
+
+
+  firebase.database().ref('/points').on('child_added', (data) => {
+    // add marker to map
+    console.log("Neuer Punkt an "+data.val().lng+" und "+data.val().lat);
+    console.log()
+    new mapboxgl.Marker({
+        color: "#FFFFFF"
+    })
+    .setLngLat([data.val().lat, data.val().lng])
+    .addTo(map);
+});
 
 
 // Eigene Pins
@@ -167,9 +185,21 @@ function writeGeoData(id, lat, lng,) {
         // add marker to map
         console.log("Neuer Punkt an "+data.val().lng+" und "+data.val().lat);
         console.log()
-        new mapboxgl.Marker()
+        new mapboxgl.Marker({
+
+        })
         .setLngLat([data.val().lat, data.val().lng])
         .addTo(map);
   });
 
+  var urlRef = firebase.database().ref().child("user");
+  urlRef.once("value", function(snapshot) {
+    snapshot.forEach(function(child) {
+        var array = child.val().points;
+        console.log(array);
+        for (var prop in array) {
+            console.log(prop);
+          }
+        });
+    }); 
 });
